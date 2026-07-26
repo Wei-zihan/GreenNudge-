@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GreenNudge · Nature Trail</title>
+<link rel="icon" id="faviconLink">
+<link rel="preload" as="image" href="assets/img/cotton_img.jpg">
+<style>
+@font-face{font-family:'NotoSCMicro';font-style:normal;font-weight:700;font-display:swap;src:url(assets/fonts/NotoSC-micro.woff2) format('woff2');}
+@font-face{font-family:'ZCOOLKuaiLe';font-style:normal;font-weight:400;font-display:swap;src:url(assets/fonts/ZCOOLKuaiLe-400.woff2) format('woff2');}
+@font-face{font-family:'Dosis';font-style:normal;font-weight:500;font-display:swap;src:url(assets/fonts/Dosis-500.woff2) format('woff2');}
+@font-face{font-family:'Roboto';font-style:normal;font-weight:400;font-display:swap;src:url(assets/fonts/Roboto-400.woff2) format('woff2');}
+@font-face{font-family:'Roboto';font-style:normal;font-weight:700;font-display:swap;src:url(assets/fonts/Roboto-700.woff2) format('woff2');}
+@font-face{font-family:'NotoSC';font-style:normal;font-weight:400;font-display:swap;src:url(assets/fonts/NotoSC-400.woff2) format('woff2');}
+@font-face{font-family:'NotoSC';font-style:normal;font-weight:700;font-display:swap;src:url(assets/fonts/NotoSC-700.woff2) format('woff2');}
+
+  :root{
+    --display:"Fredoka","ZCOOL KuaiLe",-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    --bg:#000000;
+    --surface:#0d0f0e;
+    --surface-2:#161a18;
+    --hair:rgba(255,255,255,0.09);
+    --hair-strong:rgba(255,255,255,0.16);
+    --text:#f2f4f2;
+    --text-dim:#9aa39d;
+    --text-faint:#5c635e;
+    --accent:#7dd6a8;
+    --accent-deep:#2f6f4f;
+    --amber:#d8a24a;
+    --blur:saturate(160%) blur(20px);
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;background:var(--bg);touch-action:none;overscroll-behavior:none;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    position:fixed;inset:0;
+    user-select:none;-webkit-user-select:none;
+    -webkit-touch-callout:none;
+  }
+  #app{position:relative;width:100%;height:100%;overflow:hidden;}
+
+  /* desktop nav arrows */
+  .nav-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:25;
+    width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,0.06);border:1px solid var(--hair);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+    color:var(--text-dim);cursor:pointer;transition:opacity .3s var(--ease),transform .18s var(--ease),background .2s;}
+  .nav-arrow:hover{background:rgba(255,255,255,0.12);color:var(--text);}
+  .nav-arrow:active{transform:translateY(-50%) scale(.9);}
+  .nav-arrow svg{width:20px;height:20px;}
+  .nav-left{left:14px;}
+  .nav-right{right:14px;}
+  /* hide arrows on touch devices where swipe is natural */
+  @media (hover:none){.nav-arrow{display:none;}}
+
+  /* ===== LAYER 1: species pager ===== */
+  #pager{position:absolute;inset:0;display:flex;transition:transform .42s var(--ease);touch-action:pan-y;}
+  .slide{position:relative;min-width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+
+  .topbar{position:absolute;top:0;left:0;right:0;height:calc(env(safe-area-inset-top) + 64px);
+    padding-top:env(safe-area-inset-top);
+    display:flex;align-items:center;justify-content:center;z-index:20;pointer-events:none;}
+  .species-name{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:.3px;pointer-events:none;
+    display:flex;align-items:center;gap:10px;}
+  .lang-toggle{pointer-events:auto;position:absolute;right:18px;top:calc(env(safe-area-inset-top) + 14px);
+    width:52px;height:32px;border-radius:16px;background:rgba(255,255,255,0.08);
+    border:1px solid var(--hair);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+    display:flex;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:600;
+    color:var(--text-dim);transition:all .2s var(--ease);z-index:100;}
+  .lang-toggle:active{transform:scale(.92);}
+  .lang-toggle .on{color:var(--accent);}
+
+  .stage{position:relative;width:50vw;max-width:270px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;}
+  .species-media{width:100%;height:100%;position:relative;}
+  .species-img{width:100%;height:100%;object-fit:contain;transition:transform .5s var(--ease),opacity .3s;
+    filter:drop-shadow(0 20px 50px rgba(0,0,0,.6));}
+  .species-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;pointer-events:none;
+    transition:opacity .4s var(--ease);}
+
+  .hint{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 92px);left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;gap:7px;color:var(--text-faint);font-size:13px;font-weight:500;
+    transition:opacity .3s;white-space:nowrap;}
+  .hint svg{width:15px;height:15px;opacity:.8;}
+  .hint.pulse{animation:hintpulse 2.4s var(--ease) infinite;}
+  @keyframes hintpulse{0%,100%{opacity:.45;}50%{opacity:.9;}}
+
+  /* dots */
+  .dots{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 30px);left:50%;transform:translateX(-50%);
+    display:flex;gap:9px;z-index:20;}
+  .dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);transition:all .3s var(--ease);}
+  .dot.active{background:var(--accent);width:22px;border-radius:4px;}
+
+  /* ===== LAYER 2: detail ===== */
+  #detail{position:absolute;inset:0;background:var(--bg);z-index:40;
+    opacity:0;visibility:hidden;transition:opacity .4s var(--ease),visibility .4s;
+    display:flex;flex-direction:column;}
+  #detail.open{opacity:1;visibility:visible;}
+
+  .detail-top{position:absolute;top:0;left:0;right:0;height:calc(env(safe-area-inset-top) + 60px);
+    padding-top:env(safe-area-inset-top);display:flex;align-items:center;z-index:5;}
+  .back-btn{pointer-events:auto;margin-left:10px;width:44px;height:44px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;color:var(--text);
+    background:rgba(255,255,255,0.06);border:1px solid var(--hair);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+    transition:transform .2s var(--ease);}
+  .back-btn:active{transform:scale(.9);}
+  .back-btn svg{width:19px;height:19px;}
+  .detail-name{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--display);font-size:19px;font-weight:600;white-space:nowrap;letter-spacing:.3px;}
+
+  .detail-stage{flex:1;display:flex;align-items:center;justify-content:center;position:relative;min-height:0;padding:70px 0 0;}
+  .detail-media-wrap{position:relative;width:76vw;max-width:400px;aspect-ratio:1;
+    transform:scale(.62);opacity:0;transition:transform .5s var(--ease),opacity .4s var(--ease);}
+  #detail.open .detail-media-wrap{transform:scale(1);opacity:1;}
+  .detail-media-wrap img,.detail-media-wrap video{width:100%;height:100%;object-fit:contain;position:absolute;inset:0;
+    filter:drop-shadow(0 24px 60px rgba(0,0,0,.7));}
+  .detail-media-wrap video{opacity:0;transition:opacity .35s var(--ease);}
+  .detail-media-wrap video.show{opacity:1;}
+  .detail-media-wrap img.hide{opacity:0;transition:opacity .35s var(--ease);}
+
+  /* replay + sound cluster, bottom-left of the media */
+  .media-ctrls{position:absolute;left:calc(50% - 38vw);bottom:2%;display:flex;gap:12px;z-index:6;}
+  @media(min-width:530px){.media-ctrls{left:calc(50% - 200px);}}
+  .cbtn{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,0.07);border:1px solid var(--hair-strong);
+    backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);color:var(--text);
+    transition:transform .18s var(--ease),background .2s;}
+  .cbtn:active{transform:scale(.88);background:rgba(255,255,255,0.14);}
+  .cbtn svg{width:20px;height:20px;}
+  .cbtn.disabled{color:var(--text-faint);border-color:var(--hair);background:rgba(255,255,255,0.03);pointer-events:none;}
+  .cbtn.playing{background:var(--accent-deep);border-color:var(--accent);color:var(--accent);}
+
+  /* four info buttons */
+  .info-row{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;padding:16px 18px calc(env(safe-area-inset-bottom) + 22px);}
+  @media(min-height:720px){.info-row{grid-template-columns:repeat(4,1fr);}}
+  .info-btn{position:relative;padding:15px 12px;border-radius:16px;background:var(--surface-2);
+    border:1px solid var(--hair);display:flex;flex-direction:column;gap:5px;align-items:flex-start;
+    transition:transform .18s var(--ease),border-color .2s,background .2s;overflow:hidden;text-align:left;}
+  .info-btn:active{transform:scale(.96);border-color:var(--hair-strong);background:#1c211e;}
+  .info-btn .ib-icon{width:22px;height:22px;color:var(--accent);}
+  .info-btn .ib-label{font-family:var(--display);font-size:14px;font-weight:600;letter-spacing:.2px;line-height:1.2;color:var(--text);}
+  .info-btn .ib-sub{font-size:10.5px;color:var(--text-faint);font-weight:500;}
+
+  /* ===== LAYER 3: sheet ===== */
+  #scrim{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:50;opacity:0;visibility:hidden;
+    transition:opacity .32s var(--ease),visibility .32s;backdrop-filter:blur(2px);}
+  #scrim.open{opacity:1;visibility:visible;}
+  #sheet{position:absolute;left:0;right:0;bottom:0;z-index:60;max-height:82%;
+    background:var(--surface);border-top-left-radius:26px;border-top-right-radius:26px;
+    border-top:1px solid var(--hair-strong);
+    transform:translateY(102%);transition:transform .42s var(--ease);
+    display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);}
+  #sheet.open{transform:translateY(0);}
+  .grabber{width:38px;height:5px;border-radius:3px;background:rgba(255,255,255,.22);margin:11px auto 4px;flex:none;}
+  .sheet-scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 22px 20px;}
+  .sheet-eyebrow{font-family:var(--display);font-size:12px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent);margin-bottom:7px;}
+  .sheet-title{font-family:var(--display);font-size:24px;font-weight:700;margin-bottom:16px;letter-spacing:.3px;}
+  .sheet-img{width:100%;border-radius:16px;margin-bottom:15px;background:#000;aspect-ratio:16/10;object-fit:cover;border:1px solid var(--hair);}
+  .sheet-body{font-size:15.5px;line-height:1.62;color:#dfe4e0;font-weight:400;}
+  .sheet-close{margin:6px auto 16px;width:54px;height:54px;border-radius:50%;flex:none;
+    background:var(--surface-2);border:1px solid var(--hair-strong);color:var(--text);
+    display:flex;align-items:center;justify-content:center;transition:transform .18s var(--ease);}
+  .sheet-close:active{transform:scale(.9);}
+  .sheet-close svg{width:22px;height:22px;}
+
+  .fadein{animation:fadein .5s var(--ease);}
+  @keyframes fadein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  /* content zone: appears over detail upper area when a sheet is open */
+  .content-zone{position:absolute;left:0;right:0;top:0;bottom:0;z-index:55;
+    opacity:0;visibility:hidden;transition:opacity .35s var(--ease),visibility .35s;pointer-events:none;}
+  .content-zone.show{opacity:1;visibility:visible;}
+  .content-zone.show .content-img-card{pointer-events:auto;}
+  .content-img-card{position:absolute;top:calc(env(safe-area-inset-top) + 74px);left:50%;transform:translateX(-50%);
+    width:86vw;max-width:400px;aspect-ratio:16/10;border-radius:18px;overflow:hidden;
+    background:var(--surface-2);border:1px solid var(--hair);cursor:pointer;
+    box-shadow:0 20px 50px rgba(0,0,0,.55);}
+  .content-img-card img{width:100%;height:100%;object-fit:cover;display:block;}
+  .img-zoom-hint{position:absolute;right:10px;bottom:10px;width:30px;height:30px;border-radius:50%;
+    background:rgba(0,0,0,.5);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;color:#fff;}
+  .img-zoom-hint svg{width:16px;height:16px;}
+  .ip-figure{position:absolute;left:-2vw;bottom:0;width:auto;height:52vh;max-height:460px;
+    filter:drop-shadow(0 8px 20px rgba(0,0,0,.5));pointer-events:none;
+    animation:ipIn .5s var(--ease);z-index:1;}
+  /* desktop / wide screens: make the IP noticeably larger and nudge it in from the edge */
+  @media (min-width:700px){
+    .ip-figure{left:2vw;height:64vh;max-height:620px;}
+  }
+  @keyframes ipIn{from{opacity:0;transform:translateY(14px) scale(.96);}to{opacity:1;transform:none;}}
+
+  /* fullscreen image viewer */
+  #imgViewer{position:absolute;inset:0;z-index:120;background:rgba(0,0,0,.94);
+    display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;
+    transition:opacity .3s var(--ease),visibility .3s;}
+  #imgViewer.open{opacity:1;visibility:visible;}
+  #imgViewer img{max-width:94vw;max-height:80vh;object-fit:contain;border-radius:12px;}
+  .viewer-close{position:absolute;top:calc(env(safe-area-inset-top) + 16px);right:18px;
+    width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid var(--hair-strong);
+    display:flex;align-items:center;justify-content:center;color:#fff;backdrop-filter:var(--blur);}
+  .viewer-close:active{transform:scale(.9);}
+  .viewer-close svg{width:22px;height:22px;}
+
+  /* when sheet open, dim/hide the media controls */
+  .media-ctrls.hidden{opacity:0;pointer-events:none;transition:opacity .25s;}
+
+  /* ======================================================================
+     Green Nudge brand layer  —  Brand Passport, 23 Aug 2022
+     Dark surface retained (the species media are rendered on pure black,
+     so a #000 canvas keeps them seamless). Palette + type follow p.28/29.
+     ====================================================================== */
+  :root{
+    --turquoise:#44BEA8;    /* Calm Turquoise  — primary supporting colour */
+    --fresh-green:#B3E000;  /* Fresh Green */
+    --yellow:#F4EA17;       /* Positive Yellow */
+    --orange:#FCC741;       /* Orange Spark */
+    --blue-sky:#2F9DD8;
+    --pink:#F490A0;
+    --grape:#A869AB;
+    --red:#DC513B;          /* Red Warning */
+    --soft-green:#DFEED3;
+    --soft-blue:#DFF1EF;
+    --dark-grey:#33393A;
+
+    --display:"Dosis","ZCOOLKuaiLe","NotoSC",-apple-system,BlinkMacSystemFont,sans-serif;
+    --body:"Roboto","NotoSC",-apple-system,BlinkMacSystemFont,sans-serif;
+    --accent:var(--turquoise);
+    --accent-deep:#1d4f45;
+    --amber:var(--orange);
+    --brand-grad:linear-gradient(90deg,#44BEA8 0%,#7CCF60 50%,#B3E000 100%);
+  }
+
+  body{font-family:var(--body);}
+
+  /* ---- type: Dosis Medium for headings, Roboto for everything else ---- */
+  .species-name{font-family:var(--display);font-weight:500;font-size:25px;letter-spacing:.2px;}
+  .detail-name{font-family:var(--display);font-weight:500;font-size:22px;letter-spacing:.2px;}
+  .sheet-title{font-family:var(--display);font-weight:500;font-size:27px;letter-spacing:.2px;}
+  .info-btn .ib-label{font-family:var(--display);font-weight:500;font-size:15px;letter-spacing:.1px;}
+  .sheet-eyebrow{font-family:var(--body);font-weight:700;font-size:11.5px;letter-spacing:1.4px;color:var(--turquoise);}
+  .info-btn .ib-sub,.sheet-body,.hint{font-family:var(--body);font-weight:400;}
+  .lang-toggle{font-family:var(--body);font-weight:700;}
+  .lang-toggle .lang-zh{font-family:"NotoSCMicro",var(--body);}
+
+  /* ---- brand colour accents ---- */
+  .dot.active{background:var(--turquoise);}
+  .lang-toggle .on{color:var(--turquoise);}
+  .cbtn.playing{background:var(--fresh-green);border-color:var(--fresh-green);color:#1b1f1c;}
+  .nav-arrow:hover{color:var(--turquoise);}
+
+  /* four sections, each with its own brand colour (Brand Passport p.30) */
+  .info-btn .ib-icon{width:30px;height:30px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;}
+  .info-btn .ib-icon svg{width:18px;height:18px;}
+  .info-btn[data-key="appearance"] .ib-icon{background:rgba(68,190,168,.16);color:var(--turquoise);}
+  .info-btn[data-key="role"]       .ib-icon{background:rgba(179,224,0,.16);color:var(--fresh-green);}
+  .info-btn[data-key="uses"]       .ib-icon{background:rgba(47,157,216,.18);color:var(--blue-sky);}
+  .info-btn[data-key="other"]      .ib-icon{background:rgba(252,199,65,.18);color:var(--orange);}
+  .info-btn[data-key="appearance"]:active{border-color:var(--turquoise);}
+  .info-btn[data-key="role"]:active{border-color:var(--fresh-green);}
+  .info-btn[data-key="uses"]:active{border-color:var(--blue-sky);}
+  .info-btn[data-key="other"]:active{border-color:var(--orange);}
+
+  /* sheet gets the brand gradient as its top edge instead of a plain hairline */
+  #sheet{border-top:none;}
+  #sheet::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;
+    background:var(--brand-grad);border-top-left-radius:26px;border-top-right-radius:26px;z-index:2;}
+
+
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Layer 1 -->
+  <div class="lang-toggle" id="langToggle">
+    <span class="lang-en on">EN</span><span class="lang-zh">中</span>
+  </div>
+  <div id="pager"></div>
+  <div class="nav-arrow nav-left" id="navLeft" style="opacity:0">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </div>
+  <div class="nav-arrow nav-right" id="navRight">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+  </div>
+  <div class="dots" id="dots"></div>
+
+  <!-- Layer 2 -->
+  <div id="detail">
+    <div class="detail-top">
+      <div class="back-btn" id="backBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+      <div class="detail-name" id="detailName"></div>
+    </div>
+    <div class="detail-stage">
+      <div class="detail-media-wrap" id="detailMedia"></div>
+      <div class="media-ctrls">
+        <div class="cbtn" id="replayBtn" title="replay">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </div>
+        <div class="cbtn" id="soundBtn" title="sound">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="info-row" id="infoRow"></div>
+  </div>
+
+  <!-- content-image zone (blue) + IP zone (red), shown when a sheet is open — top level so z-index beats scrim -->
+  <div class="content-zone" id="contentZone">
+    <div class="content-img-card" id="contentImgCard">
+      <img id="contentImg" src="" alt="">
+      <div class="img-zoom-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/></svg>
+      </div>
+    </div>
+    <img class="ip-figure" id="ipFigure" src="" alt="">
+  </div>
+
+  <!-- fullscreen image viewer -->
+  <div id="imgViewer">
+    <img id="imgViewerImg" src="" alt="">
+    <div class="viewer-close" id="viewerClose">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </div>
+  </div>
+
+  <!-- Layer 3 -->
+  <div id="scrim"></div>
+  <div id="sheet">
+    <div class="grabber"></div>
+    <div class="sheet-scroll" id="sheetScroll"></div>
+    <div class="sheet-close" id="sheetClose">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </div>
+  </div>
+</div>
+
+<script>window.ASSETS = {"koel_img": "assets/img/koel_img.jpg","cotton_img": "assets/img/cotton_img.jpg","frog_img": "assets/img/frog_img.jpg","koel_vid": "assets/vid/koel_vid.mp4","cotton_vid": "assets/vid/cotton_vid.mp4","frog_vid": "assets/vid/frog_vid.mp4","koel_aud": "assets/aud/koel_aud.mp3","frog_aud": "assets/aud/frog_aud.mp3","koel_webm": "assets/vid/koel_webm.webm","frog_webm": "assets/vid/frog_webm.webm","cotton_webm": "assets/vid/cotton_webm.webm","ip_appearance": "assets/ip/ip_appearance.png","ip_role": "assets/ip/ip_role.png","ip_uses": "assets/ip/ip_uses.png","ip_other": "assets/ip/ip_other.png","cotton_appearance": "assets/content/cotton_appearance.jpg","cotton_role": "assets/content/cotton_role.jpg","cotton_uses": "assets/content/cotton_uses.jpg","cotton_other": "assets/content/cotton_other.jpg","koel_appearance": "assets/content/koel_appearance.jpg","koel_role": "assets/content/koel_role.jpg","koel_uses": "assets/content/koel_uses.jpg","koel_other": "assets/content/koel_other.jpg","frog_appearance": "assets/content/frog_appearance.jpg","frog_role": "assets/content/frog_role.jpg","frog_uses": "assets/content/frog_uses.jpg","frog_other": "assets/content/frog_other.jpg","kingfisher_img": "assets/img/kingfisher_img.jpg","kingfisher_vid": "assets/vid/kingfisher_vid.mp4","kingfisher_webm": "assets/vid/kingfisher_webm.webm","hornbill_img": "assets/img/hornbill_img.jpg","hornbill_vid": "assets/vid/hornbill_vid.mp4","hornbill_webm": "assets/vid/hornbill_webm.webm","spider_img": "assets/img/spider_img.jpg","spider_vid": "assets/vid/spider_vid.mp4","spider_webm": "assets/vid/spider_webm.webm","kingfisher_aud": "assets/aud/kingfisher_aud.mp3","hornbill_aud": "assets/aud/hornbill_aud.mp3","spider_aud": "assets/aud/spider_aud.mp3","cotton_aud": "assets/aud/cotton_aud.mp3","kingfisher_appearance": "assets/content/kingfisher_appearance.jpg","kingfisher_role": "assets/content/kingfisher_role.jpg","kingfisher_uses": "assets/content/kingfisher_uses.jpg","kingfisher_other": "assets/content/kingfisher_other.jpg","hornbill_appearance": "assets/content/hornbill_appearance.jpg","hornbill_role": "assets/content/hornbill_role.jpg","hornbill_uses": "assets/content/hornbill_uses.jpg","hornbill_other": "assets/content/hornbill_other.jpg","spider_appearance": "assets/content/spider_appearance.jpg","spider_role": "assets/content/spider_role.jpg","spider_uses": "assets/content/spider_uses.jpg","spider_other": "assets/content/spider_other.jpg","favicon": "assets/brand/favicon.png"};</script>
+<script>window.SPECIES = [
+  {
+    id:"cotton",
+    name:{en:"Cotton Tree", zh:"木棉"},
+    img:ASSETS.cotton_img, vid:ASSETS.cotton_vid, webm:ASSETS.cotton_webm, aud:ASSETS.cotton_aud,
+    info:{
+      appearance:{
+        en:"A large tree that can reach up to 30 m in height. It produces large hanging pods that split open when ripe to release fluffy white fibres.",
+        zh:"大型乔木，高可达 30 米。结出悬垂的大型果荚，成熟时裂开，释放蓬松的白色纤维。"
+      },
+      role:{
+        en:"Provides habitat and food for wildlife. The tree supports a range of birds and insects, and its flowering draws pollinators before the leaves appear.",
+        zh:"为野生动物提供栖息地与食物。此树供养多种鸟类与昆虫，在长叶之前先行开花，吸引传粉者。"
+      },
+      uses:{
+        en:"Its soft, elastic, water-repellent and buoyant fibres (kapok) were widely used to stuff life jackets, mattresses and pillows in the early to mid-20th century. Today the tree is cultivated in many tropical countries for these fibres.",
+        zh:"其柔软、有弹性、防水且浮力好的纤维（木棉絮）在 20 世纪早中期被广泛用于填充救生衣、床垫和枕头。如今许多热带国家仍为纤维而栽培此树。"
+      },
+      other:{
+        en:"Only eight Kapok trees are listed as Heritage Trees in Singapore. One notable example, planted in the early 1970s, stands beside the Toa Payoh North Flyover and serves as a living landmark for commuters.",
+        zh:"新加坡仅有八棵木棉被列为古迹树。其中一棵种于 1970 年代初，矗立在大巴窑北高架桥旁，成为通勤者眼中的活地标。"
+      }
+    },
+    content:{
+      appearance:ASSETS.cotton_appearance,
+      role:ASSETS.cotton_role,
+      uses:ASSETS.cotton_uses,
+      other:ASSETS.cotton_other
+    }
+  },
+  {
+    id:"koel",
+    name:{en:"Asian Koel", zh:"噪鹃"},
+    img:ASSETS.koel_img, vid:ASSETS.koel_vid, webm:ASSETS.koel_webm, aud:ASSETS.koel_aud,
+    info:{
+      appearance:{
+        en:"Male: glossy blue-black plumage, crimson red eyes, long tail, pale greenish-grey beak and grey legs. Female: brownish with white and rufous streaks and spots; underparts are streaked.",
+        zh:"雄鸟：亮泽的蓝黑色羽衣，深红色眼睛，长尾，淡青灰色喙，灰色脚。雌鸟：褐色，带白色与棕红色条纹和斑点；腹面有纵纹。"
+      },
+      role:{
+        en:"Helps with seed dispersal through fruit consumption, contributing to plant regeneration in both urban and natural environments.",
+        zh:"通过取食果实帮助传播种子，促进城市与自然环境中的植物更新。"
+      },
+      uses:{
+        en:"Feeds on fruits and berries. Found in forests, parks, gardens and urban areas across Singapore and Southeast Asia. A brood parasite — it lays its eggs in the nests of other birds (commonly House Crows), leaving the hosts to raise its chicks.",
+        zh:"取食果实与浆果。分布于新加坡与东南亚的森林、公园、花园及城市地区。它是巢寄生鸟，将蛋产在其他鸟（常为家鸦）的巢中，由宿主代为育雏。"
+      },
+      other:{
+        en:"Known locally as the \u201cUwu bird\u201d in Singapore, thanks to the male\u2019s loud, repetitive calls often heard at dawn — an unofficial alarm clock for many.",
+        zh:"在新加坡被戏称为「Uwu 鸟」，因雄鸟响亮而重复的叫声常在破晓响起——成了许多人非正式的闹钟。"
+      }
+    },
+    content:{
+      appearance:ASSETS.koel_appearance,
+      role:ASSETS.koel_role,
+      uses:ASSETS.koel_uses,
+      other:ASSETS.koel_other
+    }
+  },
+  {
+    id:"kingfisher",
+    name:{en:"Collared Kingfisher", zh:"白领翡翠"},
+    img:ASSETS.kingfisher_img, vid:ASSETS.kingfisher_vid, webm:ASSETS.kingfisher_webm, aud:ASSETS.kingfisher_aud,
+    info:{
+      appearance:{
+        en:"Bright blue upperparts with a distinctive white collar around the neck and white underparts. The bill is black with a pale pinkish-white lower mandible.",
+        zh:"上体亮蓝色，颈部有一圈醒目的白色环带，下体洁白。喙为黑色，下喙呈淡粉白色。"
+      },
+      role:{
+        en:"A predator that helps control populations of insects, crustaceans, small fish, frogs and other small animals, contributing to ecological balance.",
+        zh:"作为捕食者，帮助控制昆虫、甲壳类、小鱼、蛙类等小型动物的数量，维持生态平衡。"
+      },
+      uses:{
+        en:"Feeds on a variety of prey including fish, crustaceans, lizards, frogs, earthworms and insects. Commonly found near water bodies such as mangroves, coastal areas, parks and gardens across Singapore. Known for its hunting technique of perching quietly before swooping down to catch prey.",
+        zh:"取食多样的猎物，包括鱼类、甲壳类、蜥蜴、蛙类、蚯蚓与昆虫。常见于新加坡的红树林、海岸地带、公园与花园等水域附近。以静立守候、再俯冲扑食的猎捕方式著称。"
+      },
+      other:{
+        en:"The design of Japan’s Shinkansen bullet train was inspired by the kingfisher’s beak, whose long, narrow and smoothly tapered shape lets it dive into water with minimal splash. Japanese engineer Eiji Nakatsu, an avid birdwatcher, reshaped the train’s nose after it to solve the “tunnel boom” problem — a quieter, more efficient train, and a classic example of biomimicry.",
+        zh:"日本新干线列车的车头设计灵感正来自翡翠的喙——细长、平滑而渐尖的形状让它入水时几乎不激起水花。日本工程师中津英治本身是位鸟类爱好者，他依此重塑车头，解决了列车出隧道时的「隧道爆音」问题，造就更安静、更高效的列车，成为仿生学的经典案例。"
+      }
+    },
+    content:{
+      appearance:ASSETS.kingfisher_appearance,
+      role:ASSETS.kingfisher_role,
+      uses:ASSETS.kingfisher_uses,
+      other:ASSETS.kingfisher_other
+    }
+  },
+  {
+    id:"hornbill",
+    name:{en:"Oriental Pied Hornbill", zh:"冠斑犀鸟"},
+    img:ASSETS.hornbill_img, vid:ASSETS.hornbill_vid, webm:ASSETS.hornbill_webm, aud:ASSETS.hornbill_aud,
+    info:{
+      appearance:{
+        en:"Black body with a white belly and wing edges. Males have a larger yellowish bill with a black-tipped casque; females have a smaller casque with more black markings.",
+        zh:"身体黑色，腹部与翼缘为白色。雄鸟的喙较大、偏黄，盔突尖端带黑；雌鸟盔突较小，黑色斑纹更多。"
+      },
+      role:{
+        en:"An important seed disperser, especially for large fruiting trees such as figs, helping maintain forest regeneration and plant diversity.",
+        zh:"重要的种子传播者，尤其对榕树等大型果树而言，有助于维持森林更新与植物多样性。"
+      },
+      uses:{
+        en:"Feeds on fruits such as figs, rambutans and palm fruits, and also takes small animals including reptiles, birds and mammals. Found in forests, mangroves and urban parks across Singapore, especially where large trees are available for nesting. Often seen in pairs and known for strong pair bonding.",
+        zh:"取食榕果、红毛丹、棕榈果等果实，也捕食爬行动物、鸟类与哺乳动物等小型动物。分布于新加坡的森林、红树林与城市公园，尤其偏好有大树可供营巢之处。常成对活动，配偶关系十分牢固。"
+      },
+      other:{
+        en:"The female seals herself inside a tree cavity with mud and plant material, leaving only a narrow slit through which the male feeds her and the chicks — a nesting habit that keeps the family safe from predators. Pairs also duet, with the female adding repeated small notes.",
+        zh:"雌鸟以泥土与植物材料把自己封在树洞中，只留一道窄缝，由雄鸟隔缝喂食她与雏鸟——这种独特的营巢方式使一家免受掠食者侵扰。配偶间还会二重唱，雌鸟以重复的短促音节应和。"
+      }
+    },
+    content:{
+      appearance:ASSETS.hornbill_appearance,
+      role:ASSETS.hornbill_role,
+      uses:ASSETS.hornbill_uses,
+      other:ASSETS.hornbill_other
+    }
+  },
+  {
+    id:"frog",
+    name:{en:"Four-lined Tree Frog", zh:"四道树蛙"},
+    img:ASSETS.frog_img, vid:ASSETS.frog_vid, webm:ASSETS.frog_webm, aud:ASSETS.frog_aud,
+    info:{
+      appearance:{
+        en:"Light brown to yellowish body with four distinct dark stripes running from head to back. Smooth skin with a slightly translucent belly.",
+        zh:"体色浅褐至偏黄，自头至背有四道明显的深色纵纹。皮肤光滑，腹部略透明。"
+      },
+      role:{
+        en:"Helps control insect populations as part of the food web, and serves as prey for larger animals such as birds and reptiles.",
+        zh:"作为食物网的一环帮助控制昆虫数量，同时是鸟类、爬行动物等较大动物的猎物。"
+      },
+      uses:{
+        en:"Eats insects and other small invertebrates. Mostly nocturnal and arboreal (lives in trees). Common in forests, mangroves and freshwater habitats across Singapore, especially near still or slow-moving water.",
+        zh:"取食昆虫及其他小型无脊椎动物。多为夜行性且树栖（生活在树上）。常见于新加坡的森林、红树林与淡水生境，尤其在静水或缓流水体附近。"
+      },
+      other:{
+        en:"During breeding, males serenade with loud, repetitive, quack-like calls. The couple make a foam nest above the pond; when the eggs hatch, the tadpoles fall into the water below to continue life.",
+        zh:"繁殖季时，雄蛙以响亮、重复、似鸭叫的鸣声求偶。配对后在池塘上方筑起泡沫巢；卵孵化后，蝌蚪落入下方水中，开始新的生活。"
+      }
+    },
+    content:{
+      appearance:ASSETS.frog_appearance,
+      role:ASSETS.frog_role,
+      uses:ASSETS.frog_uses,
+      other:ASSETS.frog_other
+    }
+  },
+  {
+    id:"spider",
+    name:{en:"Golden Orb Weaver", zh:"金丝蛛"},
+    img:ASSETS.spider_img, vid:ASSETS.spider_vid, webm:ASSETS.spider_webm, aud:ASSETS.spider_aud,
+    info:{
+      appearance:{
+        en:"Females are much larger, growing up to about 50 mm in body length, while males are very small — only around 5–6 mm.",
+        zh:"雌蛛体型大得多，体长可达约 50 毫米；雄蛛则十分细小，仅约 5–6 毫米。"
+      },
+      role:{
+        en:"Helps control insect populations by trapping and feeding on flying insects, supporting natural pest balance.",
+        zh:"通过结网捕食飞虫来帮助控制昆虫数量，维持自然的虫害平衡。"
+      },
+      uses:{
+        en:"Spins large, strong, vertical webs with a golden sheen that can span up to 2 metres — among the largest and strongest orb webs around. The webs trap all kinds of insects, and occasionally even small birds or bats. Common in forests, parks, gardens and other green spaces across tropical regions, including Singapore.",
+        zh:"结出大型、坚韧的垂直圆网，泛着金色光泽，跨度可达 2 米，是最大也最结实的圆网之一。网能捕获各类昆虫，偶尔连小鸟或蝙蝠也会被困住。常见于热带地区（包括新加坡）的森林、公园、花园及其他绿地。"
+      },
+      other:{
+        en:"Named for the golden colour of its silk and the orb-shaped structure of its web. Its venom is used to immobilise prey and is not lethal to humans.",
+        zh:"其名来自蛛丝的金色光泽与圆盘状的网。毒液用于制服猎物，对人类并不致命。"
+      }
+    },
+    content:{
+      appearance:ASSETS.spider_appearance,
+      role:ASSETS.spider_role,
+      uses:ASSETS.spider_uses,
+      other:ASSETS.spider_other
+    }
+  }
+];
+
+window.UI = {
+  hint:{en:"Pinch to zoom in", zh:"双指放大以查看细节"},
+  ip:{
+    appearance:ASSETS.ip_appearance,
+    role:ASSETS.ip_role,
+    uses:ASSETS.ip_uses,
+    other:ASSETS.ip_other
+  },
+  labels:{
+    appearance:{en:"Appearance", zh:"外观"},
+    role:{en:"Role in Ecosystem", zh:"生态角色"},
+    uses:{en:"Uses & Habits", zh:"用途与习性"},
+    other:{en:"Other Info", zh:"其他信息"}
+  },
+  subs:{
+    appearance:{en:"What it looks like", zh:"长什么样"},
+    role:{en:"In the ecosystem", zh:"在生态中"},
+    uses:{en:"How it lives", zh:"如何生活"},
+    other:{en:"Did you know", zh:"冷知识"}
+  }
+};
+</script>
+<script>(function(){
+  const S = window.SPECIES, UI = window.UI;
+  document.getElementById('faviconLink').href = ASSETS.favicon;
+
+  // ---- block browser native pinch-zoom (iOS Safari ignores maximum-scale) ----
+  ['gesturestart','gesturechange','gestureend'].forEach(ev=>{
+    document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
+  });
+  // block multi-touch move default (page pinch) but let our own handlers read it
+  document.addEventListener('touchmove',e=>{
+    if(e.touches.length>1) e.preventDefault();
+  },{passive:false});
+  // block double-tap zoom on iOS
+  let lastTouchEnd=0;
+  document.addEventListener('touchend',e=>{
+    const now=Date.now();
+    if(now-lastTouchEnd<=300) e.preventDefault();
+    lastTouchEnd=now;
+  },{passive:false});
+  let lang = 'en';
+  let cur = 0;               // current species index
+
+  // placeholder shown for species whose media assets have not been supplied yet
+  const PENDING_IMG='data:image/svg+xml;utf8,'+encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="#141814"/><g fill="none" stroke="#3a4640" stroke-width="3"><rect x="60" y="120" width="480" height="360" rx="18"/><circle cx="230" cy="255" r="38"/><path d="M110 430l130-140 95 105 70-60 85 95"/></g><text x="300" y="530" fill="#5d6b62" font-family="system-ui,sans-serif" font-size="26" text-anchor="middle">image pending</text></svg>`);
+  let inDetail = false;      // layer 2 open?
+  const pager = document.getElementById('pager');
+  const dots = document.getElementById('dots');
+
+  // ---------- build slides ----------
+  S.forEach((sp,i)=>{
+    const slide = document.createElement('div');
+    slide.className='slide';
+    slide.innerHTML = `
+      <div class="topbar"><div class="species-name" data-name="${sp.id}">${sp.name[lang]}</div></div>
+      <div class="stage" data-stage="${i}">
+        <div class="species-media">
+          <img class="species-img" data-src="${sp.img || PENDING_IMG}" alt="">
+        </div>
+      </div>
+      <div class="hint pulse" data-hint>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3H5a2 2 0 0 0-2 2v3m0 8v3a2 2 0 0 0 2 2h3m8-18h3a2 2 0 0 1 2 2v3m0 8v3a2 2 0 0 1-2 2h-3"/></svg>
+        <span data-hinttext>${UI.hint[lang]}</span>
+      </div>`;
+    pager.appendChild(slide);
+    const dot=document.createElement('div');
+    dot.className='dot'+(i===0?' active':'');
+    dots.appendChild(dot);
+  });
+
+  function refreshLangTexts(){
+    document.querySelectorAll('[data-name]').forEach(el=>{
+      el.textContent = S.find(s=>s.id===el.dataset.name).name[lang];
+    });
+    document.querySelectorAll('[data-hinttext]').forEach(el=> el.textContent = UI.hint[lang]);
+    // language toggle visual
+    document.querySelector('.lang-en').classList.toggle('on', lang==='en');
+    document.querySelector('.lang-zh').classList.toggle('on', lang==='zh');
+    if(inDetail) renderDetailTexts();
+    if(sheetOpen) renderSheet(sheetKey);
+  }
+
+  // ---------- pager movement ----------
+  // fetch hero images on demand: current slide + one either side
+  function ensureHero(idx){
+    const imgs = pager.querySelectorAll('.species-img');
+    [idx-1, idx, idx+1].forEach(n=>{
+      if(n<0 || n>=imgs.length) return;
+      const el = imgs[n];
+      if(el && !el.src && el.dataset.src){ el.src = el.dataset.src; }
+    });
+  }
+
+  function goTo(i){
+    cur = Math.max(0, Math.min(S.length-1, i));
+    ensureHero(cur);
+    pager.style.transform = `translateX(${-cur*100}%)`;
+    [...dots.children].forEach((d,idx)=> d.classList.toggle('active', idx===cur));
+    if(typeof updateArrows==='function') updateArrows();
+  }
+
+  // ---------- swipe + pinch on pager ----------
+  let startX=0, startY=0, dragging=false, pinchStart=0, pinching=false;
+  pager.addEventListener('touchstart',e=>{
+    if(inDetail) return;
+    if(e.touches.length===2){
+      pinching=true;
+      pinchStart=dist(e.touches[0],e.touches[1]);
+    }else if(e.touches.length===1){
+      startX=e.touches[0].clientX; startY=e.touches[0].clientY; dragging=true;
+    }
+  },{passive:true});
+
+  pager.addEventListener('touchmove',e=>{
+    if(inDetail) return;
+    if(pinching && e.touches.length===2){
+      const d=dist(e.touches[0],e.touches[1]);
+      if(d/pinchStart > 1.28){ // zoom-in threshold
+        pinching=false; dragging=false;
+        openDetail();
+      }
+      return;
+    }
+    if(dragging && e.touches.length===1){
+      const dx=e.touches[0].clientX-startX;
+      pager.style.transition='none';
+      pager.style.transform=`translateX(${-cur*100 + dx/window.innerWidth*100}%)`;
+    }
+  },{passive:true});
+
+  pager.addEventListener('touchend',e=>{
+    if(inDetail) return;
+    pinching=false;
+    if(dragging){
+      const dx=(e.changedTouches[0].clientX)-startX;
+      const dy=(e.changedTouches[0].clientY)-startY;
+      pager.style.transition='';
+      if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)){
+        goTo(cur + (dx<0?1:-1));
+      }else{
+        goTo(cur);
+      }
+    }
+    dragging=false;
+  });
+
+  // desktop fallback: double-click to zoom, arrow keys to switch
+  pager.addEventListener('dblclick',()=>{ if(!inDetail && !mMoved) openDetail(); });
+  window.addEventListener('keydown',e=>{
+    if(inDetail){ if(e.key==='Escape') closeDetail(); return; }
+    if(e.key==='ArrowRight') goTo(cur+1);
+    if(e.key==='ArrowLeft') goTo(cur-1);
+    if(e.key==='Enter'||e.key===' ') openDetail();
+  });
+
+  // desktop: mouse drag to swipe pages
+  let mDown=false, mStartX=0, mMoved=false;
+  pager.addEventListener('mousedown',e=>{
+    if(inDetail) return;
+    mDown=true; mStartX=e.clientX; mMoved=false;
+    pager.style.transition='none';
+  });
+  window.addEventListener('mousemove',e=>{
+    if(!mDown||inDetail) return;
+    const dx=e.clientX-mStartX;
+    if(Math.abs(dx)>4) mMoved=true;
+    pager.style.transform=`translateX(${-cur*100 + dx/window.innerWidth*100}%)`;
+  });
+  window.addEventListener('mouseup',e=>{
+    if(!mDown||inDetail) return;
+    mDown=false;
+    const dx=e.clientX-mStartX;
+    pager.style.transition='';
+    if(Math.abs(dx)>70){ goTo(cur + (dx<0?1:-1)); }
+    else { goTo(cur); }
+  });
+
+  // clickable side arrows (desktop-friendly)
+  const leftArrow=document.getElementById('navLeft');
+  const rightArrow=document.getElementById('navRight');
+  if(leftArrow) leftArrow.addEventListener('click',()=>goTo(cur-1));
+  if(rightArrow) rightArrow.addEventListener('click',()=>goTo(cur+1));
+  function updateArrows(){
+    if(leftArrow) leftArrow.style.opacity = cur===0?'0':'1';
+    if(rightArrow) rightArrow.style.opacity = cur===S.length-1?'0':'1';
+  }
+
+  function dist(a,b){return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);}
+
+  // ---------- LAYER 2: detail ----------
+  const detail=document.getElementById('detail');
+  const detailMedia=document.getElementById('detailMedia');
+  const detailName=document.getElementById('detailName');
+  const infoRow=document.getElementById('infoRow');
+  const replayBtn=document.getElementById('replayBtn');
+  const soundBtn=document.getElementById('soundBtn');
+  let audio=null;
+
+  const ICONS={
+    appearance:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 5c-5 0-9 4.5-10 7 1 2.5 5 7 10 7s9-4.5 10-7c-1-2.5-5-7-10-7z"/></svg>',
+    role:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 2 8h10c0-3 2-5 2-8a7 7 0 0 0-7-7z"/><path d="M9 22h6"/></svg>',
+    uses:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18M3 6h18M3 18h18"/></svg>',
+    other:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>'
+  };
+
+  function openDetail(){
+    inDetail=true;
+    const sp=S[cur];
+    detailName.textContent=sp.name[lang];
+    // media: image + video overlay
+    // video sources are emitted only for the formats actually supplied
+    const vsrc=[sp.webm?`<source src="${sp.webm}" type="video/webm">`:'',
+                sp.vid ?`<source src="${sp.vid}" type="video/mp4">`:''].join('');
+    detailMedia.innerHTML=`<img id="dImg" src="${sp.img || PENDING_IMG}" alt="">`+
+      (vsrc?`<video id="dVid" playsinline muted preload="auto">${vsrc}</video>`:'');
+    replayBtn.classList.toggle('disabled', !vsrc);
+    // build four buttons
+    infoRow.innerHTML='';
+    ['appearance','role','uses','other'].forEach(k=>{
+      const btn=document.createElement('button');
+      btn.className='info-btn';
+      btn.dataset.key=k;
+      btn.innerHTML=`<span class="ib-icon">${ICONS[k]}</span>
+        <span class="ib-label" data-lbl="${k}">${UI.labels[k][lang]}</span>
+        <span class="ib-sub" data-sub="${k}">${UI.subs[k][lang]}</span>`;
+      btn.addEventListener('click',()=>openSheet(k));
+      infoRow.appendChild(btn);
+    });
+    // sound availability
+    if(sp.aud){
+      soundBtn.classList.remove('disabled');
+      audio=new Audio(sp.aud);
+      audio.addEventListener('ended',()=>soundBtn.classList.remove('playing'));
+    }else{
+      soundBtn.classList.add('disabled');
+      audio=null;
+    }
+    detail.classList.add('open');
+    // play video once after transition + DOM settle
+    setTimeout(()=>playVideoOnce(), 420);
+  }
+
+  function playVideoOnce(){
+    const v=document.getElementById('dVid');
+    if(!v) return;
+    v.muted=true;
+    try{ v.currentTime=0; }catch(e){}
+    const tryplay=()=>{
+      const pr=v.play();
+      if(pr && pr.then){
+        pr.then(()=> v.classList.add('show')).catch(()=>{
+          // autoplay blocked — leave image showing, user can tap replay
+          v.classList.remove('show');
+        });
+      }else{
+        v.classList.add('show');
+      }
+    };
+    if(v.readyState>=2){ tryplay(); }
+    else {
+      v.addEventListener('loadeddata',tryplay,{once:true});
+      v.addEventListener('canplay',tryplay,{once:true});
+      v.load();
+    }
+  }
+  replayBtn.addEventListener('click',playVideoOnce);
+
+  soundBtn.addEventListener('click',()=>{
+    if(!audio) return;
+    audio.currentTime=0; audio.play();
+    soundBtn.classList.add('playing');
+  });
+
+  function renderDetailTexts(){
+    const sp=S[cur];
+    detailName.textContent=sp.name[lang];
+    document.querySelectorAll('[data-lbl]').forEach(el=> el.textContent=UI.labels[el.dataset.lbl][lang]);
+    document.querySelectorAll('[data-sub]').forEach(el=> el.textContent=UI.subs[el.dataset.sub][lang]);
+  }
+
+  const backBtn=document.getElementById('backBtn');
+  function closeDetail(){
+    inDetail=false;
+    detail.classList.remove('open');
+    if(audio){audio.pause();soundBtn.classList.remove('playing');}
+  }
+  backBtn.addEventListener('click',closeDetail);
+
+  // ---------- LAYER 3: sheet ----------
+  const scrim=document.getElementById('scrim');
+  const sheet=document.getElementById('sheet');
+  const sheetScroll=document.getElementById('sheetScroll');
+  const sheetClose=document.getElementById('sheetClose');
+  const contentZone=document.getElementById('contentZone');
+  const contentImg=document.getElementById('contentImg');
+  const contentImgCard=document.getElementById('contentImgCard');
+  const ipFigure=document.getElementById('ipFigure');
+  const mediaCtrls=document.querySelector('.media-ctrls');
+  const detailMediaWrap=document.querySelector('.detail-media-wrap');
+  let sheetOpen=false, sheetKey=null;
+
+  // placeholder image (replace later with real content images per species+key)
+  const PLACEHOLDER='data:image/svg+xml;utf8,'+encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250"><rect width="400" height="250" fill="#1c211e"/><g fill="none" stroke="#3a4640" stroke-width="2"><rect x="1" y="1" width="398" height="248"/><path d="M0 0l400 250M400 0L0 250"/></g><text x="200" y="132" fill="#5c635e" font-family="sans-serif" font-size="16" text-anchor="middle">内容图 Content image</text></svg>`);
+
+  function renderSheet(k){
+    const sp=S[cur];
+    sheetScroll.innerHTML=`
+      <div class="sheet-eyebrow fadein">${sp.name[lang]}</div>
+      <div class="sheet-title fadein">${UI.labels[k][lang]}</div>
+      <div class="sheet-body fadein">${sp.info[k][lang]}</div>`;
+  }
+  function openSheet(k){
+    sheetKey=k; sheetOpen=true;
+    renderSheet(k);
+    // content image (placeholder for now) + IP for this section
+    // content image: use the species' real image for this section if available, else placeholder
+    const sp0=S[cur];
+    contentImg.src=(sp0.content && sp0.content[k]) ? sp0.content[k] : PLACEHOLDER;
+    ipFigure.src=UI.ip[k];
+    ipFigure.style.height='';  // reset any previous fit-shrink
+    // re-trigger IP entrance animation
+    ipFigure.style.animation='none'; void ipFigure.offsetWidth; ipFigure.style.animation='';
+    contentZone.classList.add('show');
+    mediaCtrls.classList.add('hidden');
+    if(detailMediaWrap) detailMediaWrap.style.opacity='0';
+    scrim.classList.add('open'); sheet.classList.add('open');
+    // anchor IP above the sheet after it has fully animated up
+    setTimeout(positionIP, 460);
+  }
+  function positionIP(){
+    if(!sheetOpen) return;
+    const sh=sheet.getBoundingClientRect();
+    const vh=window.innerHeight;
+    let sheetH = vh - sh.top;
+    if(!(sheetH>120 && sheetH<vh)) sheetH = Math.round(vh*0.36); // guard bad reads
+    const ipH = ipFigure.getBoundingClientRect().height || (vh*0.5);
+    // show head→chest above the sheet: chest sits ~42% down the full-body image
+    // → tuck 58% of the IP behind the sheet top
+    let bottom = sheetH - ipH*0.58;
+    // never push the IP off-screen downward
+    if(bottom < -ipH*0.2) bottom = -ipH*0.2;
+    ipFigure.style.bottom = bottom + 'px';
+  }
+  window.addEventListener('resize',()=>{ if(sheetOpen) positionIP(); });
+  function closeSheet(){
+    sheetOpen=false; scrim.classList.remove('open'); sheet.classList.remove('open');
+    contentZone.classList.remove('show');
+    mediaCtrls.classList.remove('hidden');
+    if(detailMediaWrap) detailMediaWrap.style.opacity='1';
+  }
+  sheetClose.addEventListener('click',closeSheet);
+  scrim.addEventListener('click',closeSheet);
+
+  // ---------- fullscreen image viewer ----------
+  const imgViewer=document.getElementById('imgViewer');
+  const imgViewerImg=document.getElementById('imgViewerImg');
+  const viewerClose=document.getElementById('viewerClose');
+  contentImgCard.addEventListener('click',()=>{
+    imgViewerImg.src=contentImg.src;
+    imgViewer.classList.add('open');
+  });
+  function closeViewer(){ imgViewer.classList.remove('open'); }
+  viewerClose.addEventListener('click',closeViewer);
+  imgViewer.addEventListener('click',e=>{ if(e.target===imgViewer) closeViewer(); });
+
+  // ---------- language toggle (global) ----------
+  document.getElementById('langToggle').addEventListener('click',()=>{
+    lang = lang==='en'?'zh':'en';
+    refreshLangTexts();
+  });
+
+  // hide hint after first interaction hint-timeout
+  goTo(0);
+})();
+</script>
+</body>
+</html>
