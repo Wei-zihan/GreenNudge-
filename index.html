@@ -271,12 +271,31 @@
 
 
   /* ---- guide avatar toggle, sits beside the language toggle ---- */
-  .guide-toggle{pointer-events:auto;position:absolute;right:82px;top:calc(env(safe-area-inset-top) + 14px);
-    width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);
-    border:1px solid var(--hair);overflow:hidden;display:flex;align-items:center;justify-content:center;
-    transition:transform .2s var(--ease),border-color .2s;z-index:100;}
+  /* Narrow phones: the centred species name would otherwise run under the
+     top-right toggles, so ease the type down until it clears them. */
+  @media (max-width:360px){
+    .species-name{font-size:21px;}
+    .detail-name{font-size:19px;}
+  }
+  @media (max-width:320px){
+    .species-name{font-size:19.5px;}
+    .detail-name{font-size:18px;}
+  }
+  /* Guide toggle: a capsule the same width as the language toggle, sitting directly
+     below it so it never crowds the species name. The hexagonal badge is the knob —
+     it slides left for one guide and right for the other, and keeps its own metal
+     silhouette (deliberately no circular mask, no clipping). */
+  .guide-toggle{pointer-events:auto;position:absolute;right:18px;
+    top:calc(env(safe-area-inset-top) + 54px);
+    width:52px;height:32px;border-radius:16px;background:rgba(255,255,255,0.08);
+    border:1px solid var(--hair);z-index:100;overflow:visible;
+    transition:transform .2s var(--ease),border-color .2s;}
   .guide-toggle:active{transform:scale(.92);border-color:var(--turquoise);}
-  .guide-toggle img{width:132%;height:132%;object-fit:contain;}
+  .guide-toggle img{position:absolute;top:50%;left:2px;width:27px;height:auto;
+    transform:translate(0,-50%);
+    filter:drop-shadow(0 1px 3px rgba(0,0,0,.55));
+    transition:transform .28s var(--ease);}
+  .guide-toggle.g-boy img{transform:translate(19.6px,-50%);}
 
   .ob-brand{font-family:var(--display);font-weight:500;font-size:31px;letter-spacing:.4px;
     color:var(--text);line-height:1.15;margin-bottom:6px;}
@@ -964,6 +983,7 @@ window.UI = {
   function setGuide(g){
     guide = g;
     guideImg.src = UI.guides[g].icon;
+    document.getElementById('guideToggle').classList.toggle('g-boy', g==='boy');
     if(sheetOpen) ipFigure.src = UI.guides[g].ip[sheetKey];   // swap live if a sheet is open
   }
   document.getElementById('guideToggle').addEventListener('click',()=>{
