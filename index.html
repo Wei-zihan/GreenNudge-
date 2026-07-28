@@ -7,7 +7,7 @@
 <link rel="icon" id="faviconLink">
 <link rel="preload" as="image" href="assets/img/cotton_img.jpg">
 <style>
-@font-face{font-family:'NotoSCMicro';font-style:normal;font-weight:700;font-display:swap;src:url(assets/fonts/NotoSC-micro.woff2) format('woff2');}
+@font-face{font-family:'NotoSCMicro';font-style:normal;font-weight:700;font-display:swap;src:url(assets/fonts/NotoSCMicro-700.woff2) format('woff2');}
 @font-face{font-family:'ZCOOLKuaiLe';font-style:normal;font-weight:400;font-display:swap;src:url(assets/fonts/ZCOOLKuaiLe-400.woff2) format('woff2');}
 @font-face{font-family:'Dosis';font-style:normal;font-weight:500;font-display:swap;src:url(assets/fonts/Dosis-500.woff2) format('woff2');}
 @font-face{font-family:'Roboto';font-style:normal;font-weight:400;font-display:swap;src:url(assets/fonts/Roboto-400.woff2) format('woff2');}
@@ -240,7 +240,9 @@
   .sheet-eyebrow{font-family:var(--body);font-weight:700;font-size:11.5px;letter-spacing:1.4px;color:var(--turquoise);}
   .info-btn .ib-sub,.sheet-body,.hint{font-family:var(--body);font-weight:400;}
   .lang-toggle{font-family:var(--body);font-weight:700;}
-  .lang-toggle .lang-zh{font-family:"NotoSCMicro",var(--body);}
+  /* the toggle's 中 uses a 1-glyph subset so the full CJK font stays unloaded in EN */
+  .lang-toggle .lang-zh,
+  #obLang .ob-lang, #obLang .ob-sub{font-family:"NotoSCMicro",var(--display),var(--body);}
 
   /* ---- brand colour accents ---- */
   .dot.active{background:var(--turquoise);}
@@ -267,11 +269,61 @@
     background:var(--brand-grad);border-top-left-radius:26px;border-top-right-radius:26px;z-index:2;}
 
 
+
+  /* ---- guide avatar toggle, sits beside the language toggle ---- */
+  .guide-toggle{pointer-events:auto;position:absolute;right:82px;top:calc(env(safe-area-inset-top) + 14px);
+    width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);
+    border:1px solid var(--hair);overflow:hidden;display:flex;align-items:center;justify-content:center;
+    transition:transform .2s var(--ease),border-color .2s;z-index:100;}
+  .guide-toggle:active{transform:scale(.92);border-color:var(--turquoise);}
+  .guide-toggle img{width:132%;height:132%;object-fit:contain;}
+
+  /* ---- onboarding: language then guide ---- */
+  #onboard{position:absolute;inset:0;z-index:200;background:var(--bg);
+    transition:opacity .45s var(--ease),visibility .45s;}
+  #onboard.done{opacity:0;visibility:hidden;pointer-events:none;}
+  .ob-screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:30px;padding:26px;text-align:center;
+    opacity:0;visibility:hidden;transition:opacity .4s var(--ease),visibility .4s;}
+  .ob-screen.on{opacity:1;visibility:visible;}
+  .ob-head{display:flex;flex-direction:column;gap:7px;align-items:center;}
+  .ob-title{font-family:var(--display);font-weight:500;font-size:27px;color:var(--text);letter-spacing:.2px;}
+  .ob-sub{font-family:var(--body);font-weight:400;font-size:13px;color:var(--text-faint);}
+  .ob-opts{display:flex;gap:15px;justify-content:center;align-items:stretch;}
+  .ob-lang{min-width:130px;padding:17px 20px;border-radius:16px;background:var(--surface-2);
+    border:1px solid var(--hair);color:var(--text);
+    font-family:var(--display);font-weight:500;font-size:20px;letter-spacing:.2px;
+    transition:transform .18s var(--ease),border-color .2s;}
+  .ob-lang:active{transform:scale(.96);border-color:var(--turquoise);}
+  .ob-guide{width:138px;padding:12px 10px 14px;border-radius:20px;background:var(--surface-2);
+    border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;
+    transition:transform .18s var(--ease),border-color .2s;}
+  .ob-guide:active{transform:scale(.96);border-color:var(--turquoise);}
+  .ob-guide img{width:104px;height:auto;display:block;}
+
 </style>
 </head>
 <body>
 <div id="app">
+  <div id="onboard">
+    <div class="ob-screen on" id="obLang">
+      <div class="ob-head"><div class="ob-title">Language</div><div class="ob-sub">语言</div></div>
+      <div class="ob-opts">
+        <button class="ob-lang" data-pick-lang="en">English</button>
+        <button class="ob-lang" data-pick-lang="zh">中文</button>
+      </div>
+    </div>
+    <div class="ob-screen" id="obGuide">
+      <div class="ob-head"><div class="ob-title" id="obGuideTitle"></div><div class="ob-sub" id="obGuideSub"></div></div>
+      <div class="ob-opts">
+        <button class="ob-guide" data-pick-guide="girl"><img id="obGirlImg" alt="Guide A"></button>
+        <button class="ob-guide" data-pick-guide="boy"><img id="obBoyImg" alt="Guide B"></button>
+      </div>
+    </div>
+  </div>
+
   <!-- Layer 1 -->
+  <div class="guide-toggle" id="guideToggle"><img id="guideToggleImg" alt="Current guide"></div>
   <div class="lang-toggle" id="langToggle">
     <span class="lang-en on">EN</span><span class="lang-zh">中</span>
   </div>
@@ -336,7 +388,7 @@
   </div>
 </div>
 
-<script>window.ASSETS = {"koel_img": "assets/img/koel_img.jpg","cotton_img": "assets/img/cotton_img.jpg","frog_img": "assets/img/frog_img.jpg","koel_vid": "assets/vid/koel_vid.mp4","cotton_vid": "assets/vid/cotton_vid.mp4","frog_vid": "assets/vid/frog_vid.mp4","koel_aud": "assets/aud/koel_aud.mp3","frog_aud": "assets/aud/frog_aud.mp3","koel_webm": "assets/vid/koel_webm.webm","frog_webm": "assets/vid/frog_webm.webm","cotton_webm": "assets/vid/cotton_webm.webm","ip_appearance": "assets/ip/ip_appearance.png","ip_role": "assets/ip/ip_role.png","ip_uses": "assets/ip/ip_uses.png","ip_other": "assets/ip/ip_other.png","cotton_appearance": "assets/content/cotton_appearance.jpg","cotton_role": "assets/content/cotton_role.jpg","cotton_uses": "assets/content/cotton_uses.jpg","cotton_other": "assets/content/cotton_other.jpg","koel_appearance": "assets/content/koel_appearance.jpg","koel_role": "assets/content/koel_role.jpg","koel_uses": "assets/content/koel_uses.jpg","koel_other": "assets/content/koel_other.jpg","frog_appearance": "assets/content/frog_appearance.jpg","frog_role": "assets/content/frog_role.jpg","frog_uses": "assets/content/frog_uses.jpg","frog_other": "assets/content/frog_other.jpg","kingfisher_img": "assets/img/kingfisher_img.jpg","kingfisher_vid": "assets/vid/kingfisher_vid.mp4","kingfisher_webm": "assets/vid/kingfisher_webm.webm","hornbill_img": "assets/img/hornbill_img.jpg","hornbill_vid": "assets/vid/hornbill_vid.mp4","hornbill_webm": "assets/vid/hornbill_webm.webm","spider_img": "assets/img/spider_img.jpg","spider_vid": "assets/vid/spider_vid.mp4","spider_webm": "assets/vid/spider_webm.webm","kingfisher_aud": "assets/aud/kingfisher_aud.mp3","hornbill_aud": "assets/aud/hornbill_aud.mp3","spider_aud": "assets/aud/spider_aud.mp3","cotton_aud": "assets/aud/cotton_aud.mp3","kingfisher_appearance": "assets/content/kingfisher_appearance.jpg","kingfisher_role": "assets/content/kingfisher_role.jpg","kingfisher_uses": "assets/content/kingfisher_uses.jpg","kingfisher_other": "assets/content/kingfisher_other.jpg","hornbill_appearance": "assets/content/hornbill_appearance.jpg","hornbill_role": "assets/content/hornbill_role.jpg","hornbill_uses": "assets/content/hornbill_uses.jpg","hornbill_other": "assets/content/hornbill_other.jpg","spider_appearance": "assets/content/spider_appearance.jpg","spider_role": "assets/content/spider_role.jpg","spider_uses": "assets/content/spider_uses.jpg","spider_other": "assets/content/spider_other.jpg","favicon": "assets/brand/favicon.png"};</script>
+<script>window.ASSETS = {"koel_img": "assets/img/koel_img.jpg", "cotton_img": "assets/img/cotton_img.jpg", "frog_img": "assets/img/frog_img.jpg", "koel_vid": "assets/vid/koel_vid.mp4", "cotton_vid": "assets/vid/cotton_vid.mp4", "frog_vid": "assets/vid/frog_vid.mp4", "koel_aud": "assets/aud/koel_aud.mp3", "frog_aud": "assets/aud/frog_aud.mp3", "koel_webm": "assets/vid/koel_webm.webm", "frog_webm": "assets/vid/frog_webm.webm", "cotton_webm": "assets/vid/cotton_webm.webm", "cotton_appearance": "assets/content/cotton_appearance.jpg", "cotton_role": "assets/content/cotton_role.jpg", "cotton_uses": "assets/content/cotton_uses.jpg", "cotton_other": "assets/content/cotton_other.jpg", "koel_appearance": "assets/content/koel_appearance.jpg", "koel_role": "assets/content/koel_role.jpg", "koel_uses": "assets/content/koel_uses.jpg", "koel_other": "assets/content/koel_other.jpg", "frog_appearance": "assets/content/frog_appearance.jpg", "frog_role": "assets/content/frog_role.jpg", "frog_uses": "assets/content/frog_uses.jpg", "frog_other": "assets/content/frog_other.jpg", "kingfisher_img": "assets/img/kingfisher_img.jpg", "kingfisher_vid": "assets/vid/kingfisher_vid.mp4", "kingfisher_webm": "assets/vid/kingfisher_webm.webm", "hornbill_img": "assets/img/hornbill_img.jpg", "hornbill_vid": "assets/vid/hornbill_vid.mp4", "hornbill_webm": "assets/vid/hornbill_webm.webm", "spider_img": "assets/img/spider_img.jpg", "spider_vid": "assets/vid/spider_vid.mp4", "spider_webm": "assets/vid/spider_webm.webm", "kingfisher_aud": "assets/aud/kingfisher_aud.mp3", "hornbill_aud": "assets/aud/hornbill_aud.mp3", "spider_aud": "assets/aud/spider_aud.mp3", "cotton_aud": "assets/aud/cotton_aud.mp3", "kingfisher_appearance": "assets/content/kingfisher_appearance.jpg", "kingfisher_role": "assets/content/kingfisher_role.jpg", "kingfisher_uses": "assets/content/kingfisher_uses.jpg", "kingfisher_other": "assets/content/kingfisher_other.jpg", "hornbill_appearance": "assets/content/hornbill_appearance.jpg", "hornbill_role": "assets/content/hornbill_role.jpg", "hornbill_uses": "assets/content/hornbill_uses.jpg", "hornbill_other": "assets/content/hornbill_other.jpg", "spider_appearance": "assets/content/spider_appearance.jpg", "spider_role": "assets/content/spider_role.jpg", "spider_uses": "assets/content/spider_uses.jpg", "spider_other": "assets/content/spider_other.jpg", "favicon": "assets/brand/favicon.png", "ip_girl_appearance": "assets/ip/ip_girl_appearance.webp", "ip_girl_role": "assets/ip/ip_girl_role.webp", "ip_girl_uses": "assets/ip/ip_girl_uses.webp", "ip_girl_other": "assets/ip/ip_girl_other.webp", "avatar_girl": "assets/brand/avatar_girl.webp", "ip_boy_appearance": "assets/ip/ip_boy_appearance.webp", "ip_boy_role": "assets/ip/ip_boy_role.webp", "ip_boy_uses": "assets/ip/ip_boy_uses.webp", "ip_boy_other": "assets/ip/ip_boy_other.webp", "avatar_boy": "assets/brand/avatar_boy.webp"};</script>
 <script>window.SPECIES = [
   {
     id:"cotton",
@@ -516,11 +568,17 @@
 
 window.UI = {
   hint:{en:"Pinch to zoom in", zh:"双指放大以查看细节"},
-  ip:{
-    appearance:ASSETS.ip_appearance,
-    role:ASSETS.ip_role,
-    uses:ASSETS.ip_uses,
-    other:ASSETS.ip_other
+  guides:{
+    girl:{ icon:ASSETS.avatar_girl, ip:{
+      appearance:ASSETS.ip_girl_appearance, role:ASSETS.ip_girl_role,
+      uses:ASSETS.ip_girl_uses, other:ASSETS.ip_girl_other } },
+    boy:{ icon:ASSETS.avatar_boy, ip:{
+      appearance:ASSETS.ip_boy_appearance, role:ASSETS.ip_boy_role,
+      uses:ASSETS.ip_boy_uses, other:ASSETS.ip_boy_other } }
+  },
+  intro:{
+    guide:{en:"Choose your guide", zh:"选择你的向导"},
+    guideSub:{en:"You can switch anytime", zh:"随时可以切换"}
   },
   labels:{
     appearance:{en:"Appearance", zh:"外观"},
@@ -556,6 +614,7 @@ window.UI = {
     lastTouchEnd=now;
   },{passive:false});
   let lang = 'en';
+  let guide = 'girl';   // which mascot accompanies the info sheets
   let cur = 0;               // current species index
 
   // placeholder shown for species whose media assets have not been supplied yet
@@ -599,7 +658,6 @@ window.UI = {
   }
 
   // ---------- pager movement ----------
-  // fetch hero images on demand: current slide + one either side
   function ensureHero(idx){
     const imgs = pager.querySelectorAll('.species-img');
     [idx-1, idx, idx+1].forEach(n=>{
@@ -835,7 +893,7 @@ window.UI = {
     // content image: use the species' real image for this section if available, else placeholder
     const sp0=S[cur];
     contentImg.src=(sp0.content && sp0.content[k]) ? sp0.content[k] : PLACEHOLDER;
-    ipFigure.src=UI.ip[k];
+    ipFigure.src=UI.guides[guide].ip[k];
     ipFigure.style.height='';  // reset any previous fit-shrink
     // re-trigger IP entrance animation
     ipFigure.style.animation='none'; void ipFigure.offsetWidth; ipFigure.style.animation='';
@@ -886,6 +944,43 @@ window.UI = {
   document.getElementById('langToggle').addEventListener('click',()=>{
     lang = lang==='en'?'zh':'en';
     refreshLangTexts();
+  });
+
+  // ---------- guide (mascot) selection ----------
+  const guideImg = document.getElementById('guideToggleImg');
+  function setGuide(g){
+    guide = g;
+    guideImg.src = UI.guides[g].icon;
+    if(sheetOpen) ipFigure.src = UI.guides[g].ip[sheetKey];   // swap live if a sheet is open
+  }
+  document.getElementById('guideToggle').addEventListener('click',()=>{
+    setGuide(guide==='girl' ? 'boy' : 'girl');
+  });
+
+  // ---------- onboarding: pick language, then pick guide ----------
+  const onboard = document.getElementById('onboard');
+  document.getElementById('obGirlImg').src = UI.guides.girl.icon;
+  document.getElementById('obBoyImg').src  = UI.guides.boy.icon;
+  guideImg.src = UI.guides[guide].icon;
+
+  document.querySelectorAll('[data-pick-lang]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      lang = btn.dataset.pickLang;
+      refreshLangTexts();
+      document.getElementById('obGuideTitle').textContent = UI.intro.guide[lang];
+      document.getElementById('obGuideSub').textContent   = UI.intro.guideSub[lang];
+      document.getElementById('obLang').classList.remove('on');
+      document.getElementById('obGuide').classList.add('on');
+    });
+  });
+  document.querySelectorAll('[data-pick-guide]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      setGuide(btn.dataset.pickGuide);
+      onboard.classList.add('done');
+      // belt-and-braces: if the fade never runs (reduced motion, backgrounded tab),
+      // still take the overlay out of the layout so it can never mask the app
+      setTimeout(()=>{ onboard.style.display='none'; }, 500);
+    });
   });
 
   // hide hint after first interaction hint-timeout
