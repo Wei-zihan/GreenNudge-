@@ -883,6 +883,7 @@ window.UI = {
   },{passive:false});
   let lang = 'en';
   let guide = 'girl';   // which mascot accompanies the info sheets
+  const SECTIONS = ['appearance','role','uses','other'];
   let cur = 0;               // current species index
 
   // placeholder shown for species whose media assets have not been supplied yet
@@ -996,7 +997,17 @@ window.UI = {
       if(e.key==='Escape') closeGuidePicker();
       return;
     }
-    if(inDetail){ if(e.key==='Escape') closeDetail(); return; }
+    if(inDetail){
+      if(sheetOpen){
+        // the sheet is the topmost layer, so it is what Escape should dismiss
+        if(e.key==='Escape') closeSheet();
+        if(e.key==='ArrowRight') switchSheet(1);
+        if(e.key==='ArrowLeft')  switchSheet(-1);
+        return;
+      }
+      if(e.key==='Escape') closeDetail();
+      return;
+    }
     if(e.key==='ArrowRight') goTo(cur+1);
     if(e.key==='ArrowLeft') goTo(cur-1);
     if(e.key==='Enter'||e.key===' ') openDetail();
@@ -1128,6 +1139,8 @@ window.UI = {
   }
 
   const backBtn=document.getElementById('backBtn');
+  // tapping the enlarged species art shrinks it back, same as the arrow top-left
+  detailMedia.addEventListener('click',()=>{ if(inDetail && !sheetOpen) closeDetail(); });
   function closeDetail(){
     inDetail=false;
     detail.classList.remove('open');
@@ -1209,6 +1222,45 @@ window.UI = {
     ipFigure.style.bottom = bottom + 'px';
   }
   window.addEventListener('resize',()=>{ if(sheetOpen) positionIP(); });
+
+  // Move to a neighbouring section without closing and reopening the sheet, so the
+  // panel stays put and only its contents change. Wraps around the four.
+  function switchSheet(dir){
+    if(!sheetOpen) return;
+    const i = SECTIONS.indexOf(sheetKey);
+    if(i < 0) return;
+    const k = SECTIONS[(i + dir + SECTIONS.length) % SECTIONS.length];
+    sheetKey = k;
+    renderSheet(k);
+    const sp0 = S[cur];
+    contentImg.src = (sp0.content && sp0.content[k]) ? sp0.content[k] : PLACEHOLDER;
+    ipFigure.src = UI.guides[guide].ip[k];
+    ipFigure.addEventListener('load', positionIP, {once:true});
+    ipFigure.style.animation='none'; void ipFigure.offsetWidth; ipFigure.style.animation='';
+    positionIP();
+  }
+
+  // A sideways flick anywhere on the sheet or the picture above it moves between
+  // sections. Only a decisive horizontal one counts, so reading and scrolling the
+  // text still behave normally.
+  function attachSwipe(el, onSwipe){
+    let x0=0, y0=0, tracking=false;
+    el.addEventListener('touchstart',e=>{
+      tracking = e.touches.length===1;
+      if(tracking){ x0=e.touches[0].clientX; y0=e.touches[0].clientY; }
+    },{passive:true});
+    el.addEventListener('touchend',e=>{
+      if(!tracking) return;
+      tracking=false;
+      const dx=e.changedTouches[0].clientX-x0, dy=e.changedTouches[0].clientY-y0;
+      if(Math.abs(dx)>55 && Math.abs(dx)>Math.abs(dy)*1.4){
+        e.preventDefault();          // also stops the tap that would follow
+        onSwipe(dx<0 ? 1 : -1);
+      }
+    });
+  }
+  attachSwipe(sheet, switchSheet);
+  attachSwipe(contentImgCard, switchSheet);
   function closeSheet(){
     sheetOpen=false; scrim.classList.remove('open'); sheet.classList.remove('open');
     contentZone.classList.remove('show');
