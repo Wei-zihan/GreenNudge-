@@ -1168,13 +1168,18 @@ window.UI = {
     contentImg.src=(sp0.content && sp0.content[k]) ? sp0.content[k] : PLACEHOLDER;
     ipFigure.src=UI.guides[guide].ip[k];
     ipFigure.style.height='';  // reset any previous fit-shrink
+    // The placement below needs the artwork's real proportions. On a phone the first
+    // view of a guide often has not decoded by then, and an undecoded image reports no
+    // size - which used to bury the shorter guides under the sheet. Re-place on load.
+    ipFigure.addEventListener('load', positionIP, {once:true});
     // re-trigger IP entrance animation
     ipFigure.style.animation='none'; void ipFigure.offsetWidth; ipFigure.style.animation='';
     contentZone.classList.add('show');
     mediaCtrls.classList.add('hidden');
     if(detailMediaWrap) detailMediaWrap.style.opacity='0';
     scrim.classList.add('open'); sheet.classList.add('open');
-    // anchor IP above the sheet after it has fully animated up
+    // anchor IP above the sheet after it has fully animated up; whichever of this and
+    // the load handler above runs last leaves the figure correctly placed
     setTimeout(positionIP, 460);
   }
   // How tall the guide actually paints. The element is object-fit:contain, so a guide
