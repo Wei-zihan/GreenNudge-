@@ -297,9 +297,12 @@
 
   /* Three guides sit as an inverted triangle: two abreast, the third centred below.
      Same grid drives the first-run picker and the mid-visit one, phone and desktop. */
-  .ob-opts.ob-opts--guides{display:grid;grid-template-columns:repeat(2,auto);
-    gap:6px 18px;justify-content:center;align-items:start;}
-  .ob-opts.ob-opts--guides .ob-guide:nth-child(3){grid-column:1 / -1;justify-self:center;}
+  .ob-opts.ob-opts--guides{--badge:min(34vw,132px);
+    display:grid;grid-template-columns:repeat(2,auto);
+    column-gap:calc(var(--badge) * 0.14);row-gap:0;
+    justify-content:center;align-items:start;}
+  .ob-opts.ob-opts--guides .ob-guide:nth-child(3){grid-column:1 / -1;justify-self:center;
+    margin-top:calc(var(--badge) * -0.150);}
 
   /* Mid-visit guide picker: the page stays visible through it. */
   #guidePicker{position:absolute;inset:0;z-index:160;
@@ -334,7 +337,7 @@
   .ob-guide{padding:0;border:none;background:none;border-radius:0;-webkit-appearance:none;appearance:none;
     display:flex;align-items:center;justify-content:center;cursor:pointer;
     transition:transform .2s var(--ease),filter .2s var(--ease);}
-  .ob-guide img{width:min(34vw,132px);height:auto;display:block;
+  .ob-guide img{width:var(--badge,min(34vw,132px));height:auto;display:block;
     filter:drop-shadow(0 8px 22px rgba(0,0,0,.55));transition:filter .2s var(--ease);}
   .ob-guide:active{transform:scale(.94);}
   .ob-guide:active img{filter:drop-shadow(0 4px 14px rgba(68,190,168,.55));}
