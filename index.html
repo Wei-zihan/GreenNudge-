@@ -1177,13 +1177,25 @@ window.UI = {
     // anchor IP above the sheet after it has fully animated up
     setTimeout(positionIP, 460);
   }
+  // How tall the guide actually paints. The element is object-fit:contain, so a guide
+  // wider than its box (the dinosaur is nearly square, the people are half as wide as
+  // they are tall) paints shorter than the box and sits at the bottom of it. Measuring
+  // the box instead would tuck such a guide almost entirely behind the sheet.
+  function drawnIPHeight(){
+    const r = ipFigure.getBoundingClientRect();
+    const nw = ipFigure.naturalWidth, nh = ipFigure.naturalHeight;
+    if(!r.height) return window.innerHeight*0.5;
+    if(!nw || !nh) return r.height;
+    return Math.min(r.height, r.width * nh / nw);
+  }
+
   function positionIP(){
     if(!sheetOpen) return;
     const sh=sheet.getBoundingClientRect();
     const vh=window.innerHeight;
     let sheetH = vh - sh.top;
     if(!(sheetH>120 && sheetH<vh)) sheetH = Math.round(vh*0.36); // guard bad reads
-    const ipH = ipFigure.getBoundingClientRect().height || (vh*0.5);
+    const ipH = drawnIPHeight();
     // show head→chest above the sheet: chest sits ~42% down the full-body image
     // → tuck 58% of the IP behind the sheet top
     let bottom = sheetH - ipH*0.58;
@@ -1226,7 +1238,12 @@ window.UI = {
   function setGuide(g){
     guide = g;
     guideImg.src = UI.guides[g].icon;
-    if(sheetOpen) ipFigure.src = UI.guides[g].ip[sheetKey];   // swap live if a sheet is open
+    if(sheetOpen){
+      ipFigure.src = UI.guides[g].ip[sheetKey];   // swap live if a sheet is open
+      // a differently-proportioned guide needs re-placing against the sheet
+      if(ipFigure.complete) positionIP();
+      else ipFigure.addEventListener('load', positionIP, {once:true});
+    }
   }
   function openGuidePicker(){
     document.getElementById('gpTitle').textContent = UI.intro.guideSwitch[lang];
